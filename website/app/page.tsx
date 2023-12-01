@@ -6,13 +6,17 @@ import Speedrun from "./Speedrun";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div>
+    <main className="p-4 w-full h-[100vh]">
+      <div className="h-full flex flex-col">
 
-        test
+        <h1 className="font-bold">
+          Programming Speedrun Website thing
+        </h1>
 
 
-        <Speedrun/>
+        <div className="flex-auto">
+          <Speedrun/>
+        </div>
 
 
       </div>
