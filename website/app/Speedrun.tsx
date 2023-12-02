@@ -59,9 +59,7 @@ export default function Speedrun() {
             );
 
             console.log("Loading worker - host");
-
             await worker.loadWorker();
-
             console.log("Load worker done - host");
 
             setPythonWorker(worker);
@@ -99,7 +97,7 @@ export default function Speedrun() {
 
 
     const onChange = async (newValue:string) => {
-        console.log("change", newValue);
+        // console.log("change", newValue);
         setCodeString(newValue);
     };
 
@@ -115,18 +113,19 @@ export default function Speedrun() {
     };
 
 
+
     const formatTimeElapsed = (milliseconds: number): string => {
-        const hours = Math.floor(milliseconds / 3600000);
-        const minutes = Math.floor((milliseconds % 3600000) / 60000);
+        // Calculate total minutes without limiting to 60
+        const totalMinutes = Math.floor(milliseconds / 60000);
         const seconds = Math.floor((milliseconds % 60000) / 1000);
         const millis = milliseconds % 1000;
 
-        const paddedHours = hours.toString().padStart(2, '0');
-        const paddedMinutes = minutes.toString().padStart(2, '0');
+        // Padding for display
+        const paddedMinutes = totalMinutes.toString().padStart(2, '0');
         const paddedSeconds = seconds.toString().padStart(2, '0');
         const paddedMillis = millis.toString().padStart(3, '0');
 
-        return `${paddedHours}:${paddedMinutes}:${paddedSeconds}.${paddedMillis}`;
+        return `${paddedMinutes}:${paddedSeconds}.${paddedMillis}`;
     }
 
 
@@ -179,6 +178,7 @@ export default function Speedrun() {
     }, [isPlaying, codeString]);
 
 
+
     return (
         <div className="h-full">
 
@@ -196,9 +196,10 @@ export default function Speedrun() {
                 <div className="flex-1 flex flex-col">
                     {/* RIGHT */}
 
-                    <div className="flex-[2] mb-2 relative flex flex-col bg-zinc-800 rounded-md">
+                    <div className="flex-[2] mb-2 relative flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
                         <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
                             {/* 00:22:02.426 */}
+
                             { formatTimeElapsed(elapsedTime!) }
                         </div>
 
@@ -225,8 +226,7 @@ export default function Speedrun() {
                                 // https://codepen.io/zymawy/pen/XwbxoJ
                                 setOptions={{
                                     showLineNumbers: true,
-                                    enableLiveAutocompletion: true,
-
+                                    enableBasicAutocompletion: true,
                                 }}
                             />
                         </div>
@@ -241,7 +241,7 @@ export default function Speedrun() {
 
                     </div>
 
-                    <div className="flex-[1] bg-zinc-800 rounded-md">
+                    <div className="flex-[1] bg-zinc-800 rounded-md p-4">
                         {/* TODO: Maybe have an overlay here which says press Ctrl+Enter to submit (maybe change the start hotkey also) */}
 
                         <h2>results</h2>
