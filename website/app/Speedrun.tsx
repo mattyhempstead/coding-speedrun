@@ -23,6 +23,8 @@ import { PythonWorker } from "@/python/pythonWorker";
 
 import { challengeHelloWorld } from "@/challenges/challenges";
 
+import { useInterval, useEventListener } from 'usehooks-ts';
+
 
 
 export default function Speedrun() {
@@ -31,24 +33,42 @@ export default function Speedrun() {
     // Code string in editor
     const [codeString, setCodeString] = useState<string>("");
 
+    // Reference to code editor
+    // Needed so we can .focus() it
     const editorRef = useRef<AceEditor>(null);
 
-    const [isPlaying, setIsPlaying] = useState<boolean>(false);
-
-
-    const [startTime, setStartTime] = useState<number|null>(null);
-    const [elapsedTime, setElapsedTime] = useState<number|null>(null);
-
-    const [submittedTime, setSubmittedTime] = useState<number|null>(null);
-    const [isExecutingCode, setIsExecutingCode] = useState<boolean>(false);
 
     // A worker for executing python code in a separate thread
     const [pythonWorker, setPythonWorker] = useState<ModuleThread<PythonWorker>|null>(null);
 
 
-    useEffect(() => {
-        // TODO: fix the references and async stuff so that it actually terminates
 
+    // True if user is currently writing code for a challenge
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
+
+    const [isPassedChallenge, setIsPassedChallenge] = useState<boolean>(false);
+
+    // Unix time in ms that challenge was started
+    const [startTime, setStartTime] = useState<number|null>(null);
+
+    // While playing, is dynamically updated to reflect ms since challenge was started
+    const [elapsedTime, setElapsedTime] = useState<number|null>(null);
+
+    // Unix time in ms that code was submitted for challenge
+    const [submittedTime, setSubmittedTime] = useState<number|null>(null);
+
+    // True if code has been submitted but still executing and so test cases result unknown
+    const [isExecutingCode, setIsExecutingCode] = useState<boolean>(false);
+
+
+    const isLoading = (pythonWorker != null);
+
+
+
+    useEffect(() => {
+
+
+        // TODO: fix the references and async stuff so that it actually terminates
         console.log("useeffectdawdaw");
 
         const initWorker = async () => {
@@ -58,9 +78,9 @@ export default function Speedrun() {
                 new Worker(new URL('@/python/pythonWorker.ts', import.meta.url))
             );
 
-            console.log("Loading worker - host");
-            await worker.loadWorker();
-            console.log("Load worker done - host");
+            // console.log("Loading worker - host");
+            // await worker.loadWorker();
+            // console.log("Load worker done - host");
 
             setPythonWorker(worker);
         }
@@ -80,6 +100,23 @@ export default function Speedrun() {
     }, []);
 
 
+    const focusEditor = () => {
+        console.log("Focusing editor.");
+        if (!editorRef.current) throw new Error("No editor ref??");
+        editorRef.current.editor.focus();
+    };
+
+
+    const startPlaying = () => {
+        setStartTime(new Date().getTime());
+        setSubmittedTime(null);
+        setElapsedTime(null);
+
+        setIsPlaying(true);
+        focusEditor();
+    }
+
+
 
     const executeCode = async () => {
         if (!pythonWorker) throw new Error("Python worker not loaded!");
@@ -91,8 +128,12 @@ export default function Speedrun() {
         console.log("Executing codeString", codeString);
         const result = await challengeHelloWorld(pythonWorker, codeString);
 
-        setIsExecutingCode(false);
+        if (result) {
+            setIsPassedChallenge(true);
+            setIsPlaying(false);
+        }
 
+        setIsExecutingCode(false);
     }
 
 
@@ -101,16 +142,6 @@ export default function Speedrun() {
         setCodeString(newValue);
     };
 
-
-    const focusEditor = () => {
-        console.log("Focusing editor!");
-
-        if (!editorRef.current) {
-            throw new Error("No editor ref??");
-        }
-
-        editorRef.current.editor.focus();
-    };
 
 
 
@@ -129,53 +160,54 @@ export default function Speedrun() {
     }
 
 
-    useEffect(() => {
-        console.log("RUNNNIGN EFFECT");
+    useInterval(() => {
+        if (!startTime) throw new Error("isPlaying=true but startTime is not set?");
+
+        const elapsedTimeNew = new Date().getTime() - startTime;
+        setElapsedTime(elapsedTimeNew);
+        // console.log("Setting elapsed time", elapsedTimeNew, startTime);
+
+    }, isPlaying ? 1 : null);
+
+
+    useEventListener('keydown', (event: KeyboardEvent) => {
+        // Check if Ctrl key is pressed along with Enter key
+        if (event.ctrlKey && event.key === 'Enter') {
+            if (!isPlaying) {
+                startPlaying();
+            } else {
+                executeCode();
+            }
+        }
+    });
+
+
+
+
+    const getTimerElement = () => {
 
         if (isPlaying) {
-            const intervalId = setInterval(() => {
-                if (startTime) {
-                    setElapsedTime(new Date().getTime() - startTime);
-                    // console.log("Setting elapsed time", elapsedTime, startTime);
-                }
-            }, 1);
-
-            return () => {
-                clearInterval(intervalId);
-            };
-        }
-    }, [isPlaying]);
-
-
-    const startPlaying = () => {
-
-        setStartTime(new Date().getTime());
-        setIsPlaying(true);
-
-        focusEditor();
-    }
-
-
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            // Check if Ctrl key is pressed along with Enter key
-            if (event.ctrlKey && event.key === 'Enter') {
-                if (!isPlaying) {
-                    startPlaying();
-                } else {
-                    executeCode();
-                }
+            if (isExecutingCode) {
+                return <span className="text-yellow-600">
+                    {formatTimeElapsed(submittedTime! - startTime!)}
+                </span>
+            } else {
+                return <span>
+                    {formatTimeElapsed(elapsedTime!)}
+                </span>
             }
-        };
-
-        // Add event listener
-        window.addEventListener('keydown', handleKeyDown);
-
-        // Cleanup function
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isPlaying, codeString]);
+        } else {
+            if (isPassedChallenge) {
+                return <span className="text-green-600">
+                    {formatTimeElapsed(submittedTime! - startTime!)}
+                </span>
+            } else {
+                return <span>
+                    00:00.000
+                </span>
+            }
+        }
+    }
 
 
 
@@ -196,14 +228,13 @@ export default function Speedrun() {
                 <div className="flex-1 flex flex-col">
                     {/* RIGHT */}
 
-                    <div className="flex-[2] mb-2 relative flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
+                    <div className="flex-[2] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
                         <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
                             {/* 00:22:02.426 */}
-
-                            { formatTimeElapsed(elapsedTime!) }
+                            {getTimerElement()}
                         </div>
 
-                        <div className="w-full h-full">
+                        <div className="w-full h-full relative">
                             <AceEditor
                                 ref={editorRef}
 
@@ -211,9 +242,11 @@ export default function Speedrun() {
                                 width="100%"
                                 height="100%"
 
+                                // TODO: Make this an options
+                                fontSize={18}
+
                                 // Don't have a line to help with line length
                                 showPrintMargin={false}
-
 
                                 mode="python"
                                 theme="dracula"
@@ -222,6 +255,7 @@ export default function Speedrun() {
                                 editorProps={{ $blockScrolling: true }}
 
                                 keyboardHandler="vim"
+                                // keyboardHandler="vscode"
 
                                 // https://codepen.io/zymawy/pen/XwbxoJ
                                 setOptions={{
@@ -229,15 +263,32 @@ export default function Speedrun() {
                                     enableBasicAutocompletion: true,
                                 }}
                             />
+
+
+                            {
+                                !isPlaying && (
+                                    <div className="w-full h-full absolute inset-0 flex flex-col gap-6 items-center justify-center">
+                                        <div>
+                                            <button
+                                                onClick={startPlaying}
+                                                className="py-2 px-4 bg-green-600 text-white rounded"
+                                                title="Click me to start the programming challenge."
+                                            >Start Challenge</button>
+                                        </div>
+
+                                        <div className="italic">
+                                            OR
+                                        </div>
+
+                                        <div className="font-bold text-xl text-zinc-400">
+                                            Ctrl + Enter
+                                        </div>
+                                    </div>
+                                )
+                            }
+
                         </div>
 
-                        {
-                            !isPlaying && (
-                                <div className="w-full h-full absolute inset-0 flex items-center justify-center">
-                                    Press Ctrl+Enter to Start.
-                                </div>
-                            )
-                        }
 
                     </div>
 
@@ -246,9 +297,11 @@ export default function Speedrun() {
 
                         <h2>results</h2>
 
-                        <button onClick={executeCode} className="mt-4 p-2 bg-blue-500 text-white rounded">Execute Code</button>
-
-                        <button onClick={focusEditor} className="mt-4 p-2 bg-blue-500 text-white rounded">Focus Editor</button>
+                        <button
+                            onClick={executeCode}
+                            className="mt-4 py-2 px-4 bg-green-600 text-white rounded"
+                            title="Hotkey: Ctrl + Enter"
+                        >Submit Code</button>
 
                         <br/>
 

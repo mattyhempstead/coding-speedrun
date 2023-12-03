@@ -20,10 +20,6 @@ function checkOutputCorrect(expected: string[], actual: string[]): boolean {
 
 
 export async function challengeHelloWorld(pythonWorker: ModuleThread<PythonWorker>, codeString: string) {
-
-    await new Promise(resolve => setTimeout(() => resolve("some value"), 1000));
-
-
     const outputLines = await pythonWorker.runPythonAsync(codeString);
     console.log("Output Lines", outputLines);
 
