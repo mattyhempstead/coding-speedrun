@@ -1,17 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Script from 'next/script';
-
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/theme-github";  // light theme
-import "ace-builds/src-noconflict/theme-monokai";  // dark theme (bad)
-import "ace-builds/src-noconflict/theme-dracula";  // dark theme
-import "ace-builds/src-noconflict/ext-language_tools";
-import "ace-builds/src-noconflict/keybinding-vim";
-import "ace-builds/src-noconflict/keybinding-vscode";
-
 
 
 import Instructions from './Instructions';
@@ -24,6 +14,7 @@ import { PythonWorker } from "@/python/pythonWorker";
 import { challengeHelloWorld } from "@/challenges/challenges";
 
 import { useInterval, useEventListener } from 'usehooks-ts';
+import CodeEditor from "./CodeEditor";
 
 
 
@@ -32,10 +23,6 @@ export default function Speedrun() {
 
     // Code string in editor
     const [codeString, setCodeString] = useState<string>("");
-
-    // Reference to code editor
-    // Needed so we can .focus() it
-    const editorRef = useRef<AceEditor>(null);
 
 
     // A worker for executing python code in a separate thread
@@ -61,7 +48,15 @@ export default function Speedrun() {
     const [isExecutingCode, setIsExecutingCode] = useState<boolean>(false);
 
 
-    const isLoading = (pythonWorker != null);
+    // Buttons
+    // "Game abandoned."
+    // "Running tests."
+    // "All tests passed."
+    // "X/Y tests passed."
+    const [resultsMessage, setResultsMessage] = useState<string>("...");
+
+
+    const isLoading = (pythonWorker == null);
 
 
 
@@ -72,7 +67,7 @@ export default function Speedrun() {
         console.log("useeffectdawdaw");
 
         const initWorker = async () => {
-            console.log("importmeta", import.meta.url);
+            console.log("import.meta.url", import.meta.url);
 
             const worker = await spawn<PythonWorker>(
                 new Worker(new URL('@/python/pythonWorker.ts', import.meta.url))
@@ -100,20 +95,13 @@ export default function Speedrun() {
     }, []);
 
 
-    const focusEditor = () => {
-        console.log("Focusing editor.");
-        if (!editorRef.current) throw new Error("No editor ref??");
-        editorRef.current.editor.focus();
-    };
-
-
     const startPlaying = () => {
         setStartTime(new Date().getTime());
         setSubmittedTime(null);
         setElapsedTime(null);
 
         setIsPlaying(true);
-        focusEditor();
+        setResultsMessage("");
     }
 
 
@@ -125,19 +113,25 @@ export default function Speedrun() {
         setSubmittedTime(new Date().getTime());
         setIsExecutingCode(true);
 
+        setResultsMessage("Running tests...");
+
         console.log("Executing codeString", codeString);
         const result = await challengeHelloWorld(pythonWorker, codeString);
 
         if (result) {
             setIsPassedChallenge(true);
             setIsPlaying(false);
+            setResultsMessage("Tests passed.");
+        } else {
+            setResultsMessage("Tests failed.");
         }
+        
 
         setIsExecutingCode(false);
     }
 
 
-    const onChange = async (newValue:string) => {
+    const onCodeChange = (newValue:string) => {
         // console.log("change", newValue);
         setCodeString(newValue);
     };
@@ -235,88 +229,108 @@ export default function Speedrun() {
                         </div>
 
                         <div className="w-full h-full relative">
-                            <AceEditor
-                                ref={editorRef}
+                            <div className={`w-full h-full ${isLoading && "invisible"}`}>
+                                <CodeEditor onChange={onCodeChange} enabled={isPlaying}/>
+                            </div>
 
-                                // style={{width:"100%"}}
-                                width="100%"
-                                height="100%"
-
-                                // TODO: Make this an options
-                                fontSize={18}
-
-                                // Don't have a line to help with line length
-                                showPrintMargin={false}
-
-                                mode="python"
-                                theme="dracula"
-                                onChange={onChange}
-                                // name="UNIQUE_ID_OF_DIV"
-                                editorProps={{ $blockScrolling: true }}
-
-                                keyboardHandler="vim"
-                                // keyboardHandler="vscode"
-
-                                // https://codepen.io/zymawy/pen/XwbxoJ
-                                setOptions={{
-                                    showLineNumbers: true,
-                                    enableBasicAutocompletion: true,
-                                }}
-                            />
-
-
-                            {
-                                !isPlaying && (
-                                    <div className="w-full h-full absolute inset-0 flex flex-col gap-6 items-center justify-center">
+                            {!isPlaying && (
+                                <div className="w-full h-full absolute inset-0 flex flex-col gap-6 items-center justify-center z-10 bg-zinc-800 bg-opacity-50">
+                                    {isLoading ? <>
+                                        <div className="text-lg font-bold italic">Loading Python environment...</div>
+                                    </> : <>
                                         <div>
+
                                             <button
                                                 onClick={startPlaying}
-                                                className="py-2 px-4 bg-green-600 text-white rounded"
+                                                className="py-2 px-4 bg-green-600 text-white rounded-lg"
                                                 title="Click me to start the programming challenge."
                                             >Start Challenge</button>
+
+                                            <div className="text-center text-zinc-500 text-sm mt-2">
+                                                (Ctrl + Enter)
+                                            </div>
                                         </div>
 
-                                        <div className="italic">
+                                        {/* <div className="italic">
                                             OR
                                         </div>
 
                                         <div className="font-bold text-xl text-zinc-400">
                                             Ctrl + Enter
-                                        </div>
-                                    </div>
-                                )
-                            }
-
+                                        </div> */}
+                                    </>
+                                    }
+                                </div>
+                            )}
                         </div>
 
-
                     </div>
+
 
                     <div className="flex-[1] bg-zinc-800 rounded-md p-4">
-                        {/* TODO: Maybe have an overlay here which says press Ctrl+Enter to submit (maybe change the start hotkey also) */}
 
-                        <h2>results</h2>
+                        {isLoading ? <>
+                            <div className="text-lg font-bold italic text-center">
+                                Loading Python environment...
+                            </div>
+                        </> : <>
+                            <div className="w-full h-full flex flex-col items-stretch">
+                                {/* TODO: Maybe have an overlay here which says press Ctrl+Enter to submit (maybe change the start hotkey also) */}
 
-                        <button
-                            onClick={executeCode}
-                            className="mt-4 py-2 px-4 bg-green-600 text-white rounded"
-                            title="Hotkey: Ctrl + Enter"
-                        >Submit Code</button>
+                                <h2 className="text-xl font-bold mb-4">Test Cases</h2>
 
-                        <br/>
+                                <div className="grow">
+                                    {isExecutingCode && "Running test cases..."}
 
-                        {isExecutingCode && "RUNNING"}
-
-                        {submittedTime && submittedTime}
+                                    {submittedTime && submittedTime}
+                                </div>
 
 
-                       <br/> 
+                                <div className="flex justify-between">
 
-                       {!pythonWorker && <p>LOADING PYTHON EXECUTION ENVIRONMENT.</p>}
-                        
+                                    <div className="grow flex flex-col justify-end">
+                                        {resultsMessage}
+                                    </div>
+
+                                    {isPlaying && <>
+                                        <div className="mr-6">
+                                            <div className="text-center text-zinc-500 text-sm mb-1">
+                                                (Ctrl + /)
+                                            </div>
+
+                                            <button
+                                                // onClick={executeCode}
+                                                className="py-2 px-4 bg-zinc-500 text-white rounded-lg"
+                                                title="Ctrl + /"
+                                            >Give Up</button>
+                                        </div>
+
+                                        <div className="">
+
+                                            <div className="text-center text-zinc-500 text-sm mb-1">
+                                                (Ctrl + Enter)
+                                            </div>
+
+                                            <button
+                                                onClick={executeCode}
+                                                className={`
+                                                    py-2 px-4 bg-green-600 text-white rounded-lg
+                                                    ${isExecutingCode && 'cursor-not-allowed bg-green-900 text-gray-500'}
+                                                `}
+                                                title="Ctrl + Enter"
+                                                disabled={isExecutingCode}
+                                            >
+                                                Submit Code
+                                            </button>
+                                        </div>
+                                    </>}
+                                </div>
+
+                            </div>
+
+                        </>}
 
                     </div>
-
 
                 </div>
 
