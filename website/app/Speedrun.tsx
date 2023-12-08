@@ -104,6 +104,11 @@ export default function Speedrun() {
         setResultsMessage("");
     }
 
+    const giveUp = () => {
+        setIsPassedChallenge(false);
+        setIsPlaying(false);
+        setResultsMessage("Challenge abandoned.");
+    }
 
 
     const executeCode = async () => {
@@ -166,11 +171,18 @@ export default function Speedrun() {
 
     useEventListener('keydown', (event: KeyboardEvent) => {
         // Check if Ctrl key is pressed along with Enter key
+
         if (event.ctrlKey && event.key === 'Enter') {
             if (!isPlaying) {
                 startPlaying();
             } else {
                 executeCode();
+            }
+        }
+
+        if (event.ctrlKey && event.key === '.') {
+            if (isPlaying) {
+                giveUp();
             }
         }
     });
@@ -203,6 +215,10 @@ export default function Speedrun() {
         }
     }
 
+
+
+    const buttonDisabledSubmitCode = (isExecutingCode || !isPlaying);
+    const buttonDisabledGiveUp = (!isPlaying);
 
 
     return (
@@ -292,16 +308,21 @@ export default function Speedrun() {
                                         {resultsMessage}
                                     </div>
 
-                                    {isPlaying && <>
+                                    {<>
                                         <div className="mr-6">
                                             <div className="text-center text-zinc-500 text-sm mb-1">
-                                                (Ctrl + /)
+                                                (Ctrl + .)
                                             </div>
 
                                             <button
-                                                // onClick={executeCode}
-                                                className="py-2 px-4 bg-zinc-500 text-white rounded-lg"
-                                                title="Ctrl + /"
+                                                onClick={giveUp}
+                                                className={`
+                                                    py-2 px-4  rounded-lg
+                                                    ${!buttonDisabledGiveUp && 'bg-zinc-500 text-white'}
+                                                    ${buttonDisabledGiveUp && 'cursor-not-allowed bg-zinc-700 text-gray-500'}
+                                                `}
+                                                title="Ctrl + ."
+                                                disabled={buttonDisabledGiveUp}
                                             >Give Up</button>
                                         </div>
 
@@ -314,11 +335,12 @@ export default function Speedrun() {
                                             <button
                                                 onClick={executeCode}
                                                 className={`
-                                                    py-2 px-4 bg-green-600 text-white rounded-lg
-                                                    ${isExecutingCode && 'cursor-not-allowed bg-green-900 text-gray-500'}
+                                                    py-2 px-4 rounded-lg
+                                                    ${!buttonDisabledSubmitCode && 'bg-green-600 text-white'}
+                                                    ${buttonDisabledSubmitCode && 'cursor-not-allowed bg-green-900 text-gray-500'}
                                                 `}
                                                 title="Ctrl + Enter"
-                                                disabled={isExecutingCode}
+                                                disabled={buttonDisabledSubmitCode}
                                             >
                                                 Submit Code
                                             </button>
