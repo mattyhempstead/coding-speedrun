@@ -5,6 +5,7 @@ import Script from 'next/script';
 
 
 import Instructions from './Instructions';
+import Timer from "./Timer";
 
 
 import { ModuleThread, spawn, Thread } from 'threads';
@@ -13,8 +14,11 @@ import { PythonWorker } from "@/python/pythonWorker";
 
 import { challengeHelloWorld } from "@/challenges/challenges";
 
-import { useInterval, useEventListener } from 'usehooks-ts';
+import { useEventListener } from 'usehooks-ts';
 import CodeEditor from "./CodeEditor";
+
+
+import { useChallengeSubmissionHistory } from "@/submissions/submissions";
 
 
 
@@ -38,9 +42,6 @@ export default function Speedrun() {
     // Unix time in ms that challenge was started
     const [startTime, setStartTime] = useState<number|null>(null);
 
-    // While playing, is dynamically updated to reflect ms since challenge was started
-    const [elapsedTime, setElapsedTime] = useState<number|null>(null);
-
     // Unix time in ms that code was submitted for challenge
     const [submittedTime, setSubmittedTime] = useState<number|null>(null);
 
@@ -54,6 +55,12 @@ export default function Speedrun() {
     // "All tests passed."
     // "X/Y tests passed."
     const [resultsMessage, setResultsMessage] = useState<string>("...");
+
+
+
+    // const {challengeSubmissions, addChallengeSubmission} = useChallengeSubmissionHistory("hello-world");
+    // console.log(challengeSubmissions);
+
 
 
     const isLoading = (pythonWorker == null);
@@ -98,7 +105,6 @@ export default function Speedrun() {
     const startPlaying = () => {
         setStartTime(new Date().getTime());
         setSubmittedTime(null);
-        setElapsedTime(null);
 
         setIsPlaying(true);
         setResultsMessage("");
@@ -127,6 +133,9 @@ export default function Speedrun() {
             setIsPassedChallenge(true);
             setIsPlaying(false);
             setResultsMessage("Tests passed.");
+
+            // addChallengeSubmission({score: submittedTime!-startTime!});
+
         } else {
             setResultsMessage("Tests failed.");
         }
@@ -141,32 +150,6 @@ export default function Speedrun() {
         setCodeString(newValue);
     };
 
-
-
-
-    const formatTimeElapsed = (milliseconds: number): string => {
-        // Calculate total minutes without limiting to 60
-        const totalMinutes = Math.floor(milliseconds / 60000);
-        const seconds = Math.floor((milliseconds % 60000) / 1000);
-        const millis = milliseconds % 1000;
-
-        // Padding for display
-        const paddedMinutes = totalMinutes.toString().padStart(2, '0');
-        const paddedSeconds = seconds.toString().padStart(2, '0');
-        const paddedMillis = millis.toString().padStart(3, '0');
-
-        return `${paddedMinutes}:${paddedSeconds}.${paddedMillis}`;
-    }
-
-
-    useInterval(() => {
-        if (!startTime) throw new Error("isPlaying=true but startTime is not set?");
-
-        const elapsedTimeNew = new Date().getTime() - startTime;
-        setElapsedTime(elapsedTimeNew);
-        // console.log("Setting elapsed time", elapsedTimeNew, startTime);
-
-    }, isPlaying ? 1 : null);
 
 
     useEventListener('keydown', (event: KeyboardEvent) => {
@@ -188,35 +171,6 @@ export default function Speedrun() {
     });
 
 
-
-
-    const getTimerElement = () => {
-
-        if (isPlaying) {
-            if (isExecutingCode) {
-                return <span className="text-yellow-600">
-                    {formatTimeElapsed(submittedTime! - startTime!)}
-                </span>
-            } else {
-                return <span>
-                    {formatTimeElapsed(elapsedTime!)}
-                </span>
-            }
-        } else {
-            if (isPassedChallenge) {
-                return <span className="text-green-600">
-                    {formatTimeElapsed(submittedTime! - startTime!)}
-                </span>
-            } else {
-                return <span>
-                    00:00.000
-                </span>
-            }
-        }
-    }
-
-
-
     const buttonDisabledSubmitCode = (isExecutingCode || !isPlaying);
     const buttonDisabledGiveUp = (!isPlaying);
 
@@ -228,11 +182,7 @@ export default function Speedrun() {
             <div className="h-full flex w-full">
 
                 <div className="flex-1 bg-zinc-800 rounded-md mr-2">
-
-
                     <Instructions/>
-
-
                 </div>
 
                 <div className="flex-1 flex flex-col">
@@ -240,8 +190,13 @@ export default function Speedrun() {
 
                     <div className="flex-[2] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
                         <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
-                            {/* 00:22:02.426 */}
-                            {getTimerElement()}
+                            <Timer
+                                startTime={startTime}
+                                submittedTime={submittedTime}
+                                isExecutingCode={isExecutingCode}
+                                isPassedChallenge={isPassedChallenge}
+                                isPlaying={isPlaying}
+                            />
                         </div>
 
                         <div className="w-full h-full relative">
