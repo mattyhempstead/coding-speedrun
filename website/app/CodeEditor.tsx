@@ -33,6 +33,9 @@ export default function CodeEditor({ enabled, onChange }: CodeEditorProps) {
         editorRef.current.editor.setHighlightGutterLine(true);
         (editorRef.current.editor.renderer as any).$cursorLayer.element.style.opacity=1;
         editorRef.current.editor.focus();
+
+        // Clear editor and reset history
+        editorRef.current.editor.session.setValue("");
     };
 
     const disableAndBlurEditor = () => {
