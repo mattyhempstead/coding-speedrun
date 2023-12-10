@@ -14,10 +14,11 @@ import "ace-builds/src-noconflict/keybinding-vscode";
 interface CodeEditorProps {
     enabled: boolean;
     onChange: (newValue:string) => void;
+    keyboardMode: string;
 }
 
 
-export default function CodeEditor({ enabled, onChange }: CodeEditorProps) {
+export default function CodeEditor({ enabled, onChange, keyboardMode }: CodeEditorProps) {
 
     // Reference to code editor
     // Needed so we can .focus() and .blur() it
@@ -28,25 +29,29 @@ export default function CodeEditor({ enabled, onChange }: CodeEditorProps) {
         /* Enable the editor, make cursor visible, and then focus */
         console.log("Focusing editor.");
         if (!editorRef.current) throw new Error("No editor ref??");
-        editorRef.current.editor.setReadOnly(false);
-        editorRef.current.editor.setHighlightActiveLine(true);
-        editorRef.current.editor.setHighlightGutterLine(true);
-        (editorRef.current.editor.renderer as any).$cursorLayer.element.style.opacity=1;
-        editorRef.current.editor.focus();
+
+        const editor = editorRef.current.editor;
+        editor.setReadOnly(false);
+        editor.setHighlightActiveLine(true);
+        editor.setHighlightGutterLine(true);
+        (editor.renderer as any).$cursorLayer.element.style.opacity=1;
+        editor.focus();
 
         // Clear editor and reset history
-        editorRef.current.editor.session.setValue("");
+        editor.session.setValue("");
     };
 
     const disableAndBlurEditor = () => {
         /* Disable the editor, make cursor invisible, and then un-focus/blur */
         console.log("Disabling editor.");
         if (!editorRef.current) throw new Error("No editor ref??");
-        editorRef.current.editor.setReadOnly(true);
-        editorRef.current.editor.setHighlightActiveLine(false);
-        editorRef.current.editor.setHighlightGutterLine(false);
-        (editorRef.current.editor.renderer as any).$cursorLayer.element.style.opacity=0;
-        editorRef.current.editor.blur();
+
+        const editor = editorRef.current.editor;
+        editor.setReadOnly(true);
+        editor.setHighlightActiveLine(false);
+        editor.setHighlightGutterLine(false);
+        (editor.renderer as any).$cursorLayer.element.style.opacity=0;
+        editor.blur();
     };
 
 
@@ -58,6 +63,24 @@ export default function CodeEditor({ enabled, onChange }: CodeEditorProps) {
             disableAndBlurEditor();
         }
     }, [enabled])
+
+
+    // Hook that will run once to remove the command that overlaps with Ctrl+Enter code submit
+    useEffect(() => {
+        if (editorRef.current) {
+            const editor = editorRef.current.editor;
+
+            // Remove command that overlaps with Ctrl+Enter
+            // This only seems to apply to vscode mode thankfully
+            editor.commands.removeCommand("addLineAfter");
+
+            // TODO: Fix bug where vim mode is not reset between games
+            // editor.commands.on("afterExec", function(e) {
+            //     console.log(e);
+            // });
+
+        }
+    }, [editorRef]);
 
 
     return <AceEditor
@@ -78,8 +101,8 @@ export default function CodeEditor({ enabled, onChange }: CodeEditorProps) {
         // name="UNIQUE_ID_OF_DIV"
         editorProps={{ $blockScrolling: true }}
 
-        keyboardHandler="vim"
-        // keyboardHandler="vscode"
+        // keyboardHandler="vim"
+        keyboardHandler={keyboardMode}
 
         // https://codepen.io/zymawy/pen/XwbxoJ
         setOptions={{

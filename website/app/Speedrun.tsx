@@ -3,24 +3,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Script from 'next/script';
 
+import { ModuleThread, spawn, Thread } from 'threads';
+import { PythonWorker } from "@/python/pythonWorker";
+import { useEventListener } from 'usehooks-ts';
 
+import { challengeHelloWorld } from "@/challenges/challenges";
+import { useChallengeSubmissionHistory } from "@/submissions/submissions";
+
+import CodeEditor from "./CodeEditor";
 import Instructions from './Instructions';
 import SubmissionHistoryPane from "./SubmissionHistoryPane";
 import Timer from "./Timer";
-
-
-import { ModuleThread, spawn, Thread } from 'threads';
-import { PythonWorker } from "@/python/pythonWorker";
-
-
-import { challengeHelloWorld } from "@/challenges/challenges";
-
-import { useEventListener } from 'usehooks-ts';
-import CodeEditor from "./CodeEditor";
-
-
-import { useChallengeSubmissionHistory } from "@/submissions/submissions";
-
+import Dropdown from "@/components/Dropdown";
 
 
 export default function Speedrun() {
@@ -28,6 +22,10 @@ export default function Speedrun() {
 
     // Code string in editor
     const [codeString, setCodeString] = useState<string>("");
+
+    // Keyboard mode: either "vscode" (regular) or "vim"
+    const [editorKeyboardMode, setEditorKeyboardMode] = useState<string>("vscode");
+
 
 
     // A worker for executing python code in a separate thread
@@ -59,6 +57,8 @@ export default function Speedrun() {
 
 
 
+
+
     const {challengeSubmissions, addChallengeSubmission} = useChallengeSubmissionHistory("hello-world");
     console.log(challengeSubmissions);
 
@@ -72,7 +72,7 @@ export default function Speedrun() {
 
 
         // TODO: fix the references and async stuff so that it actually terminates
-        console.log("useeffectdawdaw");
+        console.log("Creating pyodide worker.");
 
         const initWorker = async () => {
             console.log("import.meta.url", import.meta.url);
@@ -169,6 +169,7 @@ export default function Speedrun() {
 
     useEventListener('keydown', (event: KeyboardEvent) => {
         // Check if Ctrl key is pressed along with Enter key
+        // console.log("keyevent", event);
 
         if (event.ctrlKey && event.key === 'Enter') {
             if (!isPlaying) {
@@ -211,7 +212,7 @@ export default function Speedrun() {
                 <div className="flex-1">
                     {/* RIGHT */}
 
-                    <div className="h-[60%] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
+                    <div className="h-[60%] mb-2 flex flex-col bg-zinc-800 rounded-md px-1">
                         <div className="flex justify-between py-1">
 
                             <div className="grow flex flex-col justify-center pl-2 text-sm text-zinc-400">
@@ -231,7 +232,7 @@ export default function Speedrun() {
 
                         <div className="w-full h-full relative">
                             <div className={`w-full h-full ${isLoading && "invisible"}`}>
-                                <CodeEditor onChange={onCodeChange} enabled={isPlaying}/>
+                                <CodeEditor onChange={onCodeChange} enabled={isPlaying} keyboardMode={editorKeyboardMode}/>
                             </div>
 
                             {!isPlaying && (
@@ -263,6 +264,20 @@ export default function Speedrun() {
                                     }
                                 </div>
                             )}
+                        </div>
+
+                        <div className="py-2 px-1 text-right">
+                            <div title="The keyboard mode (only use vim mode if you know what you are doing)">
+                                <Dropdown
+                                    options={[
+                                        {value:"vscode", label:"Default Keyboard"},
+                                        {value:"vim", label:"Vim Mode"},
+                                    ]}
+                                    // onChange={(value) => console.log("new value", value)}
+                                    onChange={setEditorKeyboardMode}
+                                    defaultValue={editorKeyboardMode}
+                                />
+                            </div>
                         </div>
 
                     </div>
