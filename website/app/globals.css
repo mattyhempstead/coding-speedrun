@@ -3,8 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: #fafafa;
-  --background-rgb: #18181b;
+  --foreground-color: #fafafa;
+  --background-color: #18181b;
+
+  --scrollbar-background-color: rgb(49, 49, 49);
+  --scrollbar-foreground-color: rgb(95, 95, 95);
+  --scrollbar-foreground-color-hover: rgb(117, 117, 117);
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -16,6 +20,33 @@
 } */
 
 body {
-  color: var(--foreground-rgb);
-  background-color: var(--background-rgb);
+  color: var(--foreground-color);
+  background-color: var(--background-color);
+}
+
+
+
+
+
+
+/** Scrollbar styles **/
+
+/* Firefox */
+/* Doesn't appear to support hover colors? */
+* {
+  scrollbar-color: var(--scrollbar-foreground-color) var(--scrollbar-background-color);
+}
+
+::-webkit-scrollbar {
+  width: 0.5rem;
+  background: var(--scrollbar-background-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-foreground-color);
+  border-radius: 0.2rem;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-foreground-color-hover); 
 }

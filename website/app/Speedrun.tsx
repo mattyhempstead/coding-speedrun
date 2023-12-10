@@ -5,6 +5,7 @@ import Script from 'next/script';
 
 
 import Instructions from './Instructions';
+import SubmissionHistoryPane from "./SubmissionHistoryPane";
 import Timer from "./Timer";
 
 
@@ -58,8 +59,8 @@ export default function Speedrun() {
 
 
 
-    // const {challengeSubmissions, addChallengeSubmission} = useChallengeSubmissionHistory("hello-world");
-    // console.log(challengeSubmissions);
+    const {challengeSubmissions, addChallengeSubmission} = useChallengeSubmissionHistory("hello-world");
+    console.log(challengeSubmissions);
 
 
 
@@ -114,6 +115,12 @@ export default function Speedrun() {
         setIsPassedChallenge(false);
         setIsPlaying(false);
         setResultsMessage("Challenge abandoned.");
+
+        // addChallengeSubmission({
+        //     success: false,
+        //     duration: null,
+        //     timestamp: new Date().getTime(),
+        // });
     }
 
 
@@ -121,7 +128,10 @@ export default function Speedrun() {
         if (!pythonWorker) throw new Error("Python worker not loaded!");
 
         // if (pyodide) {
-        setSubmittedTime(new Date().getTime());
+
+        const submittedTimeTemp = new Date().getTime();
+
+        setSubmittedTime(submittedTimeTemp);
         setIsExecutingCode(true);
 
         setResultsMessage("Running tests...");
@@ -134,12 +144,17 @@ export default function Speedrun() {
             setIsPlaying(false);
             setResultsMessage("Tests passed.");
 
-            // addChallengeSubmission({score: submittedTime!-startTime!});
+            addChallengeSubmission({
+                success: true,
+                duration: submittedTimeTemp - startTime!,
+                timestamp: new Date().getTime(),
+                charCount: codeString.length,
+            });
 
         } else {
             setResultsMessage("Tests failed.");
         }
-        
+
 
         setIsExecutingCode(false);
     }
@@ -178,17 +193,25 @@ export default function Speedrun() {
     return (
         <div className="h-full">
 
-
             <div className="h-full flex w-full">
 
-                <div className="flex-1 bg-zinc-800 rounded-md mr-2">
-                    <Instructions/>
+                <div className="flex-1 mr-2">
+                    <div className="bg-zinc-800 rounded-md mb-2 h-[60%]">
+                        <Instructions/>
+                    </div>
+                    <div className="bg-zinc-800 rounded-md h-[40%]">
+                        <SubmissionHistoryPane/>
+                    </div>
                 </div>
 
-                <div className="flex-1 flex flex-col">
+                {/* <div className="flex-1 bg-zinc-800 rounded-md mr-2">
+                    <Instructions/>
+                </div> */}
+
+                <div className="flex-1">
                     {/* RIGHT */}
 
-                    <div className="flex-[2] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
+                    <div className="h-[60%] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
                         <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
                             <Timer
                                 startTime={startTime}
@@ -238,7 +261,7 @@ export default function Speedrun() {
                     </div>
 
 
-                    <div className="flex-[1] bg-zinc-800 rounded-md p-4">
+                    <div className="h-[40%] bg-zinc-800 rounded-md p-4">
 
                         {isLoading ? <>
                             <div className="text-lg font-bold italic text-center">

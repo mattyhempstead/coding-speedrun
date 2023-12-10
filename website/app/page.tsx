@@ -13,11 +13,10 @@ export default function Home() {
           Programming Speedrun Website thingo
         </h1>
 
-
-        <div className="flex-auto">
+        {/* This is so stupid: https://stackoverflow.com/questions/34144972/flexbox-avoid-child-with-longer-height-than-parent-column-direction */}
+        <div className="min-h-0 flex-1">
           <Speedrun/>
         </div>
-
 
       </div>
     </main>

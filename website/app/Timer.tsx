@@ -5,10 +5,6 @@ import React, { useState, useEffect } from "react";
 import { useInterval } from 'usehooks-ts';
 
 
-/*
-    - show live or not
-*/
-
 
 interface TimerProps {
     startTime: number | null;
@@ -22,8 +18,8 @@ interface TimerProps {
 
 export default function Timer({ startTime, submittedTime, isPlaying, isExecutingCode, isPassedChallenge }: TimerProps) {
 
-
     // While playing, is dynamically updated to reflect ms since challenge was started
+    // Technically we can calculate this during render, but we want to make *some* state updates to force a rerender.
     const [elapsedTime, setElapsedTime] = useState<number|null>(null);
 
 
@@ -80,7 +76,3 @@ export default function Timer({ startTime, submittedTime, isPlaying, isExecuting
     }
 
 }
-
-
-
-
