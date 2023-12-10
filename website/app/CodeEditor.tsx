@@ -27,7 +27,7 @@ export default function CodeEditor({ enabled, onChange, keyboardMode }: CodeEdit
 
     const enableAndFocusEditor = () => {
         /* Enable the editor, make cursor visible, and then focus */
-        console.log("Focusing editor.");
+        // console.log("Focusing editor.");
         if (!editorRef.current) throw new Error("No editor ref??");
 
         const editor = editorRef.current.editor;
@@ -43,7 +43,7 @@ export default function CodeEditor({ enabled, onChange, keyboardMode }: CodeEdit
 
     const disableAndBlurEditor = () => {
         /* Disable the editor, make cursor invisible, and then un-focus/blur */
-        console.log("Disabling editor.");
+        // console.log("Disabling editor.");
         if (!editorRef.current) throw new Error("No editor ref??");
 
         const editor = editorRef.current.editor;

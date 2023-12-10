@@ -34,3 +34,40 @@ export async function challengeHelloWorld(pythonWorker: ModuleThread<PythonWorke
     return isCorrect;
 }
 
+
+
+
+/** A map of all the test case functions for each challenge */
+export const CHALLENGE_TESTS = {
+    "hello-world": [
+        {
+            "name": "Hello, World!",
+            "function": challengeHelloWorld,
+        },
+        {
+            "name": "test case 2",
+            "function": challengeHelloWorld,
+        },
+        // {
+        //     "name": "test case 3",
+        //     "function": challengeHelloWorld,
+        // },
+        // {
+        //     "name": "test case 4",
+        //     "function": challengeHelloWorld,
+        // },
+        // {
+        //     "name": "test case 5 ",
+        //     "function": challengeHelloWorld,
+        // },
+        // {
+        //     "name": "test case 6",
+        //     "function": challengeHelloWorld,
+        // },
+        // {
+        //     "name": "test case 7",
+        //     "function": challengeHelloWorld,
+        // },
+    ]
+};
+

@@ -20,14 +20,12 @@ const SubmissionHistoryPane: React.FC<SubmissionHistoryPaneProps> = ({ challenge
 
 
     const { challengeSubmissions } = useChallengeSubmissionHistory(challengeId);
-    console.log(challengeSubmissions);
-
+    // console.log(challengeSubmissions);
 
 
     // Get best time
     const fastestTime = Math.min(...challengeSubmissions.map(submission => submission.duration));
-    console.log(fastestTime);
-
+    // console.log(fastestTime);
 
 
     function getSortedSubmissions(): Submission[] {

@@ -7,7 +7,7 @@ import { ModuleThread, spawn, Thread } from 'threads';
 import { PythonWorker } from "@/python/pythonWorker";
 import { useEventListener } from 'usehooks-ts';
 
-import { challengeHelloWorld } from "@/challenges/challenges";
+import { CHALLENGE_TESTS } from "@/challenges/challenges";
 import { useChallengeSubmissionHistory } from "@/submissions/submissions";
 
 import CodeEditor from "./CodeEditor";
@@ -56,11 +56,11 @@ export default function Speedrun() {
     const [resultsMessage, setResultsMessage] = useState<string>("...");
 
 
-
+    const challengeTests = CHALLENGE_TESTS["hello-world"];
 
 
     const {challengeSubmissions, addChallengeSubmission} = useChallengeSubmissionHistory("hello-world");
-    console.log(challengeSubmissions);
+    // console.log(challengeSubmissions);
 
 
 
@@ -137,7 +137,17 @@ export default function Speedrun() {
         setResultsMessage("Running tests...");
 
         console.log("Executing codeString", codeString);
-        const result = await challengeHelloWorld(pythonWorker, codeString);
+
+        let result = true;
+        for (let testCase of challengeTests) {
+            const resultTest = await testCase.function(pythonWorker, codeString);
+            if (!resultTest) {
+                console.log("Failed test case:", testCase.name);
+                result = false;
+            } else {
+                console.log("Passed test case:", testCase.name);
+            }
+        }
 
         if (result) {
             setIsPassedChallenge(true);
@@ -295,10 +305,25 @@ export default function Speedrun() {
 
                                 <h2 className="text-xl font-bold mb-4">Test Cases</h2>
 
-                                <div className="grow">
-                                    {isExecutingCode && "Running test cases..."}
+                                <div className="grow overflow-y-auto mb-4 bg-zinc-900 rounded-lg">
+                                    {/* {isExecutingCode && "Running test cases..."} */}
 
                                     {/* {submittedTime && submittedTime} */}
+
+                                    {challengeTests.map((testCase, index) => (
+                                        <div className="p-2 border-b-[1px] border-zinc-500" key={testCase.name}>
+                                            <details>
+                                                <summary className="pl-1 font-bold text-zinc-400 cursor-pointer">
+                                                    <span className="text-zinc-500 font-mono text-lg">{index+1}.</span> {testCase.name}
+                                                </summary>
+                                                <div className="p-2">
+                                                    <p>
+                                                        dwadwada
+                                                    </p>
+                                                </div>
+                                            </details>
+                                        </div>
+                                    ))}
                                 </div>
 
 
