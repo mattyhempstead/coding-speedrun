@@ -14,7 +14,7 @@ const Dropdown: FC<DropdownProps> = ({ options, onChange, defaultValue, classNam
 
     return (
         <select
-            className={className + " rounded bg-zinc-900 text-sm p-1"}
+            className={className + " rounded bg-zinc-900 text-sm p-1 cursor-pointer"}
             onChange={handleChange}
             value={defaultValue}
         >
