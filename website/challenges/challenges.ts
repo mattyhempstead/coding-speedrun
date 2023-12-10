@@ -20,8 +20,13 @@ function checkOutputCorrect(expected: string[], actual: string[]): boolean {
 
 
 export async function challengeHelloWorld(pythonWorker: ModuleThread<PythonWorker>, codeString: string) {
-    const outputLines = await pythonWorker.runPythonAsync(codeString);
+    const { status, outputLines, error } = await pythonWorker.runPythonAsync(codeString);
     console.log("Output Lines", outputLines);
+
+    if (status == "error") {
+        // console.log("error", error);
+        return false;
+    }
 
     const isCorrect = checkOutputCorrect(["Hello, World!"], outputLines);
     console.log("correct", isCorrect);

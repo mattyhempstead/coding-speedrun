@@ -15,6 +15,15 @@
      - Use some function which blocks until pyodide loads in
        case user submits again before pyodide has loaded
 
+
+
+    TODO
+        - handle timeout
+        - https://pyodide.org/en/stable/usage/keyboard-interrupts.html
+            - will probs need to do all of this
+            - i think, you send interrupt signals to the python process from the JS thread outside the web worker
+
+
 */
 
 
@@ -47,13 +56,27 @@ async function loadWorker() {
 
 
 
+export interface PythonExecutionError {
+    errorType: string;  // The internal error type (e.g. NameError)
+    message: string;
+    stack: string;
+}
+
+export interface PythonExecutionResult {
+    status: string;  // success, error, timeout
+    outputLines: string[];
+    error: null | PythonExecutionError;
+}
+
+
+
 /**
  * Run python code in pyodide.
  * Returns stdout of program on completion.
  * 
  * TODO: Provide stdin.
  */
-async function runPythonAsync(code: string): Promise<string[]> {
+async function runPythonAsync(code: string): Promise<PythonExecutionResult> {
 
     // await new Promise(resolve => setTimeout(() => resolve("some value"), 1000));
 
@@ -77,13 +100,32 @@ async function runPythonAsync(code: string): Promise<string[]> {
         outputLines.push(msg);
     }});
 
+
     // Run program
-    let res = await pyodide.runPythonAsync(code);
-    // console.log("RES", res);
+    try {
+        await pyodide.runPythonAsync(code);
+    } catch (e:any) {
+        // Catch errors thrown by python interpreter 
+        if (e.name == "PythonError") {
+            return {
+                status: "error",
+                outputLines: outputLines,
+                error: {
+                    errorType: e.type,
+                    message: e.message,
+                    stack: e.stack,
+                }
+            }
+        }
+    }
 
     // console.log("Output Lines:", outputLines);
 
-    return outputLines;
+    return {
+        status: "success",
+        outputLines: outputLines,
+        error: null,
+    }
 }
 
 
