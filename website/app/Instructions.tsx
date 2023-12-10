@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 
 import InlineCode from "@/components/InlineCode";
+import MonospaceBlock from "@/components/MonospaceBlock";
 
 
 export default function Instructions() {
@@ -35,17 +36,27 @@ export default function Instructions() {
 
 
             <div className="mt-6">
-
                 Print the string <InlineCode>Hello, World!</InlineCode>.
-
-
-
             </div>
 
+
+            <div className="mt-10">
+                <h2 className="text-lg font-bold mb-2">Example 1:</h2>
+
+                <MonospaceBlock>
+                    <div>
+                        <div className="font-bold">Input:</div>
+                        <div className="text-zinc-400"><i>N/A</i></div>
+                    </div>
+                    <br/>
+                    <div>
+                        <div className="font-bold">Output:</div>
+                        <div>Hello, World!</div>
+                    </div>
+                </MonospaceBlock>
+            </div>
 
         </div>
     )
 }
-
-
 
