@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 
-type Submission = {
+export type Submission = {
     success: boolean; // not needed really
     duration: number;  // null if did not finish
     timestamp: number;  // unix timestamp in millis that game finished (not started)

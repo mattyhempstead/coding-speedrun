@@ -200,7 +200,7 @@ export default function Speedrun() {
                         <Instructions/>
                     </div>
                     <div className="bg-zinc-800 rounded-md h-[40%]">
-                        <SubmissionHistoryPane/>
+                        <SubmissionHistoryPane challengeId="hello-world"/>
                     </div>
                 </div>
 
@@ -212,14 +212,21 @@ export default function Speedrun() {
                     {/* RIGHT */}
 
                     <div className="h-[60%] mb-2 flex flex-col bg-zinc-800 rounded-md px-1 pb-1">
-                        <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
-                            <Timer
-                                startTime={startTime}
-                                submittedTime={submittedTime}
-                                isExecutingCode={isExecutingCode}
-                                isPassedChallenge={isPassedChallenge}
-                                isPlaying={isPlaying}
-                            />
+                        <div className="flex justify-between py-1">
+
+                            <div className="grow flex flex-col justify-center pl-2 text-sm text-zinc-400">
+                                {resultsMessage}
+                            </div>
+
+                            <div className="text-right p-1 pr-2 text-zinc-500 font-mono">
+                                <Timer
+                                    startTime={startTime}
+                                    submittedTime={submittedTime}
+                                    isExecutingCode={isExecutingCode}
+                                    isPassedChallenge={isPassedChallenge}
+                                    isPlaying={isPlaying}
+                                />
+                            </div>
                         </div>
 
                         <div className="w-full h-full relative">
@@ -276,7 +283,7 @@ export default function Speedrun() {
                                 <div className="grow">
                                     {isExecutingCode && "Running test cases..."}
 
-                                    {submittedTime && submittedTime}
+                                    {/* {submittedTime && submittedTime} */}
                                 </div>
 
 
